@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community | SUP</title>
+  <meta name="description" content="Browse and join anonymous communities on SUP">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+
+  <div id="navbar-placeholder"></div>
+
+  <div class="container">
+    <div id="sidebar-left-placeholder"></div>
+
+    <main class="page-main">
+
+      <!-- Community Header (hidden until data loads) -->
+      <div id="community-header-detail" class="community-header animate-up" style="display:none;">
+        <div class="community-banner" id="comm-banner-bg"></div>
+        <div class="community-info-row">
+          <div class="community-header-icon" id="comm-icon-letters">C</div>
+          <div class="community-header-text">
+            <h1 id="comm-display-name">Loading...</h1>
+            <div class="community-header-desc" id="comm-display-slug">s/community</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+            <button class="btn btn-primary" id="btn-join-community" style="min-width:110px;justify-content:center;">
+              <i class="fas fa-plus"></i> Join
+            </button>
+            <div id="comm-members-badge" class="badge badge-karma" style="cursor:default;">
+              <i class="fas fa-users"></i> — members
+            </div>
+          </div>
+        </div>
+        <div style="padding:0 24px 20px;font-size:14px;color:var(--text-secondary);line-height:1.6;" id="comm-display-desc"></div>
+      </div>
+
+      <!-- Feed Header -->
+      <div class="feed-header animate-up-delay-1">
+        <h2 style="font-size:18px;">Posts</h2>
+        <div class="sort-pills" id="sorting-tabs">
+          <button class="sort-pill active" data-sort="new"><i class="fas fa-clock"></i> New</button>
+          <button class="sort-pill" data-sort="hot"><i class="fas fa-fire"></i> Hot</button>
+          <button class="sort-pill" data-sort="top"><i class="fas fa-chart-line"></i> Top</button>
+        </div>
+      </div>
+
+      <!-- Posts List -->
+      <div id="feed-posts" class="animate-up-delay-2">
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+      </div>
+    </main>
+
+    <div id="sidebar-right-placeholder"></div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { initLayout, getCurrentUser } from './js/auth.js';
+    import { fetchCommunityBySlug, checkMembership, joinCommunity, leaveCommunity, getMemberCount } from './js/communities.js';
+    import { fetchPosts, renderPostCardHTML } from './js/posts.js';
+    import { initVotingListeners } from './js/votes.js';
+    import { getQueryParams, showToast } from './js/utils.js';
+
+    let currentCommunity = null;
+    let currentSort = 'new';
+    let isMember = false;
+    let currentUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      currentUser = await getCurrentUser();
+      await initLayout();
+
+      const params = getQueryParams();
+      const slug = params.slug;
+      if (!slug) { window.location.href = 'index.html'; return; }
+
+      const { data: comm } = await fetchCommunityBySlug(slug);
+      if (!comm) {
+        showToast('Community not found', 'error');
+        setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+        return;
+      }
+
+      currentCommunity = comm;
+      document.title = `s/${comm.slug} | SUP`;
+
+      await renderCommunityHeader();
+      loadCommunityPosts();
+      setupSortListeners();
+      initVotingListeners(document.getElementById('feed-posts'));
+    });
+
+    async function renderCommunityHeader() {
+      const block     = document.getElementById('community-header-detail');
+      const nameEl    = document.getElementById('comm-display-name');
+      const slugEl    = document.getElementById('comm-display-slug');
+      const descEl    = document.getElementById('comm-display-desc');
+      const iconEl    = document.getElementById('comm-icon-letters');
+      const bannerEl  = document.getElementById('comm-banner-bg');
+      const joinBtn   = document.getElementById('btn-join-community');
+      const membersBadge = document.getElementById('comm-members-badge');
+
+      nameEl.textContent = currentCommunity.name;
+      slugEl.textContent = `s/${currentCommunity.slug}`;
+      descEl.textContent = currentCommunity.description || 'Welcome to this community!';
+
+      if (currentCommunity.banner_url) {
+        bannerEl.style.backgroundImage = `url('${currentCommunity.banner_url}')`;
+        bannerEl.style.backgroundSize = 'cover';
+        bannerEl.style.backgroundPosition = 'center';
+      }
+
+      if (currentCommunity.icon_url) {
+        iconEl.innerHTML = `<img src="${currentCommunity.icon_url}" style="width:100%;height:100%;border-radius:var(--radius-md);object-fit:cover;" alt="Icon">`;
+      } else {
+        iconEl.textContent = currentCommunity.name.charAt(0).toUpperCase();
+      }
+
+      const count = await getMemberCount(currentCommunity.id);
+      membersBadge.innerHTML = `<i class="fas fa-users"></i> ${count} member${count !== 1 ? 's' : ''}`;
+
+      if (currentUser) {
+        isMember = await checkMembership(currentCommunity.id, currentUser.id);
+        updateJoinBtn();
+
+        joinBtn.addEventListener('click', async () => {
+          joinBtn.disabled = true;
+          joinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+          if (isMember) {
+            const ok = await leaveCommunity(currentCommunity.id, currentUser.id);
+            if (ok) { isMember = false; }
+          } else {
+            const ok = await joinCommunity(currentCommunity.id, currentUser.id);
+            if (ok) { isMember = true; }
+          }
+          const newCount = await getMemberCount(currentCommunity.id);
+          membersBadge.innerHTML = `<i class="fas fa-users"></i> ${newCount} member${newCount !== 1 ? 's' : ''}`;
+          joinBtn.disabled = false;
+          updateJoinBtn();
+        });
+      } else {
+        joinBtn.addEventListener('click', () => {
+          showToast('Sign in to join communities', 'error');
+          setTimeout(() => { window.location.href = 'login.html'; }, 900);
+        });
+      }
+
+      block.style.display = 'block';
+
+      // Override sidebar "Create Post" button to pre-select this community
+      setTimeout(() => {
+        const cpBtn = document.getElementById('btn-create-post-sidebar');
+        if (cpBtn) {
+          const clone = cpBtn.cloneNode(true);
+          cpBtn.parentNode.replaceChild(clone, cpBtn);
+          clone.addEventListener('click', () => {
+            if (currentUser) window.location.href = `create-post.html?commId=${currentCommunity.id}`;
+            else { showToast('Sign in to create a post','error'); setTimeout(()=>{window.location.href='login.html';},900); }
+          });
+        }
+      }, 500);
+    }
+
+    function updateJoinBtn() {
+      const joinBtn = document.getElementById('btn-join-community');
+      if (isMember) {
+        joinBtn.innerHTML = '<i class="fas fa-check"></i> Joined';
+        joinBtn.className = 'btn btn-glass';
+      } else {
+        joinBtn.innerHTML = '<i class="fas fa-plus"></i> Join';
+        joinBtn.className = 'btn btn-primary';
+      }
+    }
+
+    async function loadCommunityPosts() {
+      const feedPosts = document.getElementById('feed-posts');
+      feedPosts.innerHTML = `
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+      `;
+
+      const { data: posts, error } = await fetchPosts({ communityId: currentCommunity.id, sortBy: currentSort });
+
+      if (error) {
+        feedPosts.innerHTML = `<div class="empty-state"><span class="empty-icon">⚠️</span><h3 class="empty-title">Error loading posts</h3></div>`;
+        return;
+      }
+
+      if (!posts || posts.length === 0) {
+        feedPosts.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon">🌸</span>
+            <h3 class="empty-title">No posts yet</h3>
+            <p class="empty-text">Be the first to share something in s/${currentCommunity.slug}!</p>
+            <button class="btn btn-primary" style="margin-top:20px;" onclick="window.location.href='create-post.html?commId=${currentCommunity.id}'">
+              <i class="fas fa-pen-nib"></i> Create Post
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      feedPosts.innerHTML = posts.map(post => renderPostCardHTML(post)).join('');
+    }
+
+    function setupSortListeners() {
+      const tabs = document.querySelectorAll('.sort-pill');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          if (tab.classList.contains('active')) return;
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentSort = tab.dataset.sort;
+          loadCommunityPosts();
+        });
+      });
+    }
+  </script>
+</body>
+</html>

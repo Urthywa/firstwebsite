@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In | SUP</title>
+  <meta name="description" content="Sign in to SUP — the anonymous community platform">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .auth-split {
+      min-height: calc(100vh - 72px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+      z-index: 1;
+    }
+    @media (max-width: 860px) {
+      .auth-split { grid-template-columns: 1fr; }
+      .auth-panel-left { display: none; }
+    }
+
+    /* Left decorative panel */
+    .auth-panel-left {
+      background: linear-gradient(160deg, rgba(139,26,66,0.2) 0%, rgba(10,7,15,0) 60%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px;
+      position: relative;
+      overflow: hidden;
+      border-right: 1px solid var(--border-subtle);
+    }
+    .auth-panel-left::before {
+      content: '';
+      position: absolute;
+      top: -100px; left: -100px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(232,96,138,0.08) 0%, transparent 60%);
+      border-radius: 50%;
+      animation: floatOrb 20s ease-in-out infinite;
+    }
+    .auth-panel-left::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; right: -60px;
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(245,200,66,0.05) 0%, transparent 60%);
+      border-radius: 50%;
+    }
+    .auth-brand-area { position: relative; z-index: 1; }
+    .auth-brand-logo {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 48px;
+    }
+    .auth-brand-logo .logo-mark { width: 52px; height: 52px; font-size: 24px; border-radius: 14px; }
+    .auth-brand-logo .logo-text { font-size: 30px; }
+
+    .auth-tagline {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--text-bright) 0%, var(--sakura-light) 60%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .auth-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 40px;
+      max-width: 380px;
+    }
+    .auth-features { display: flex; flex-direction: column; gap: 16px; }
+    .auth-feature-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: rgba(30,23,41,0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(8px);
+    }
+    .auth-feature-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--grad-sakura);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sakura);
+    }
+    .auth-feature-text { font-size: 13px; color: var(--text-primary); }
+
+    /* Right form panel */
+    .auth-panel-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 32px;
+    }
+
+    .auth-form-wrap { width: 100%; max-width: 420px; }
+    .auth-form-header { margin-bottom: 32px; }
+    .auth-form-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 6px;
+    }
+    .auth-form-sub { font-size: 14px; color: var(--text-muted); }
+
+    .input-group { position: relative; }
+    .input-icon {
+      position: absolute;
+      left: 16px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .input-group .form-control { padding-left: 44px; }
+
+    .form-check {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .form-check label { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .form-check input[type=checkbox] { accent-color: var(--sakura-rose); }
+    .form-check a { font-size: 13px; color: var(--sakura-mid); }
+
+    .password-toggle {
+      position: absolute;
+      right: 16px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      cursor: pointer;
+      z-index: 2;
+      transition: var(--transition-fast);
+    }
+    .password-toggle:hover { color: var(--text-primary); }
+  </style>
+</head>
+<body>
+  <!-- Background orbs -->
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+
+  <!-- Navbar -->
+  <div id="navbar-placeholder"></div>
+
+  <div class="auth-split animate-up">
+    <!-- Left Branding Panel -->
+    <div class="auth-panel-left">
+      <div class="auth-brand-area">
+        <div class="auth-brand-logo">
+          <div class="logo-mark">S</div>
+          <span class="logo-text">SUP</span>
+        </div>
+        <h1 class="auth-tagline">Speak Freely.<br>Stay Anonymous.</h1>
+        <p class="auth-desc">
+          Join thousands of anonymous voices sharing thoughts, links, and ideas across hundreds of communities. No identity required — only authentic expression.
+        </p>
+        <div class="auth-features">
+          <div class="auth-feature-item">
+            <div class="auth-feature-icon"><i class="fas fa-user-secret"></i></div>
+            <span class="auth-feature-text">100% Anonymous — posts always show "Anonymous"</span>
+          </div>
+          <div class="auth-feature-item">
+            <div class="auth-feature-icon"><i class="fas fa-users"></i></div>
+            <span class="auth-feature-text">Browse and create communities around any topic</span>
+          </div>
+          <div class="auth-feature-item">
+            <div class="auth-feature-icon"><i class="fas fa-arrow-up"></i></div>
+            <span class="auth-feature-text">Vote, comment, and earn karma — all anonymously</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Form Panel -->
+    <div class="auth-panel-right">
+      <div class="auth-form-wrap">
+        <div class="auth-form-header">
+          <h2 class="auth-form-title">Welcome back</h2>
+          <p class="auth-form-sub">Sign in to your account to continue</p>
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email address</label>
+            <div class="input-group">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" id="login-email" class="form-control" required placeholder="you@example.com" autocomplete="email">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <div class="input-group">
+              <i class="fas fa-lock input-icon"></i>
+              <input type="password" id="login-password" class="form-control" required placeholder="••••••••" autocomplete="current-password">
+              <i class="fas fa-eye password-toggle" id="toggle-pw"></i>
+            </div>
+          </div>
+
+          <div class="form-check">
+            <label><input type="checkbox" id="remember-me"> Remember me</label>
+            <a href="#">Forgot password?</a>
+          </div>
+
+          <button type="submit" id="login-submit" class="btn btn-primary w-full" style="justify-content:center;">
+            <i class="fas fa-sign-in-alt"></i> Sign In
+          </button>
+        </form>
+
+        <div class="divider" style="margin: 24px 0;"></div>
+
+        <p class="form-footer" style="text-align:center; color:var(--text-muted);">
+          New to SUP? <a href="signup.html" style="color:var(--sakura-mid); font-weight:600;">Create an account</a>
+        </p>
+
+        <p style="text-align:center; font-size:11px; color:var(--text-ghost); margin-top:16px;">
+          By signing in, you agree to remain fully anonymous in all public interactions.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLayout, logIn } from './js/auth.js';
+    import { showToast, getQueryParams } from './js/utils.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initLayout();
+    });
+
+    // Password visibility toggle
+    const togglePw = document.getElementById('toggle-pw');
+    const pwInput = document.getElementById('login-password');
+    togglePw.addEventListener('click', () => {
+      const isText = pwInput.type === 'text';
+      pwInput.type = isText ? 'password' : 'text';
+      togglePw.className = isText ? 'fas fa-eye password-toggle' : 'fas fa-eye-slash password-toggle';
+    });
+
+    const form = document.getElementById('login-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-submit');
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
+      const { data, error } = await logIn(email, password);
+
+      if (!error && data.user) {
+        const role = data.user?.user_metadata?.role || 'user';
+        const isAdmin = role === 'admin';
+
+        if (isAdmin) {
+          showToast('Welcome back, Admin! Redirecting to dashboard...', 'success');
+          setTimeout(() => { window.location.href = 'admin.html'; }, 800);
+        } else {
+          showToast('Welcome back!', 'success');
+          const params = getQueryParams();
+          setTimeout(() => {
+            window.location.href = params.redirect ? decodeURIComponent(params.redirect) : 'index.html';
+          }, 800);
+        }
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+      }
+    });
+  </script>
+</body>
+</html>

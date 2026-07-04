@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account | SUP</title>
+  <meta name="description" content="Join SUP — the anonymous community platform">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .auth-split {
+      min-height: calc(100vh - 72px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative; z-index: 1;
+    }
+    @media (max-width: 860px) {
+      .auth-split { grid-template-columns: 1fr; }
+      .auth-panel-left { display: none; }
+    }
+    .auth-panel-left {
+      background: linear-gradient(160deg, rgba(139,26,66,0.2) 0%, rgba(10,7,15,0) 60%);
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 60px; position: relative; overflow: hidden;
+      border-right: 1px solid var(--border-subtle);
+    }
+    .auth-panel-left::before {
+      content: '';
+      position: absolute; top: -100px; right: -60px;
+      width: 450px; height: 450px;
+      background: radial-gradient(circle, rgba(232,96,138,0.07) 0%, transparent 60%);
+      border-radius: 50%;
+      animation: floatOrb 22s ease-in-out infinite;
+    }
+    .auth-panel-right {
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 32px; overflow-y: auto;
+    }
+    .auth-form-wrap { width: 100%; max-width: 420px; }
+
+    .step-indicator {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .step-dot {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--bg-float);
+      flex: 1;
+      transition: var(--transition-mid);
+    }
+    .step-dot.active {
+      background: var(--grad-sakura);
+      box-shadow: 0 0 8px rgba(232,96,138,0.4);
+    }
+
+    .strength-bar {
+      height: 4px;
+      background: var(--bg-float);
+      border-radius: 2px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .strength-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: var(--transition-mid);
+    }
+    .strength-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    .input-group { position: relative; }
+    .input-icon {
+      position: absolute; left: 16px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted); font-size: 14px;
+      pointer-events: none; z-index: 1;
+    }
+    .input-group .form-control { padding-left: 44px; }
+
+    .password-toggle {
+      position: absolute; right: 16px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted); cursor: pointer; z-index: 2;
+      transition: var(--transition-fast);
+    }
+    .password-toggle:hover { color: var(--text-primary); }
+
+    .anon-note {
+      background: rgba(245,200,66,0.05);
+      border: 1px solid rgba(245,200,66,0.15);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex; gap: 10px; align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .anon-note-icon { color: var(--gold-mid); margin-top: 1px; flex-shrink: 0; }
+    .anon-note-text { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* Left panel content */
+    .signup-stat {
+      display: flex; flex-direction: column; gap: 16px;
+      margin-bottom: 36px;
+    }
+    .stat-card {
+      background: rgba(30,23,41,0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; gap: 16px;
+    }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--grad-sakura);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 13px; color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+
+  <div id="navbar-placeholder"></div>
+
+  <div class="auth-split animate-up">
+    <!-- Left Panel -->
+    <div class="auth-panel-left">
+      <div style="position: relative; z-index:1;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:40px;">
+          <div class="logo-mark" style="width:52px;height:52px;font-size:24px;border-radius:14px;">S</div>
+          <span class="logo-text" style="font-size:30px;">SUP</span>
+        </div>
+
+        <h1 style="font-family:'Playfair Display',serif; font-size:38px; font-weight:800; line-height:1.2; margin-bottom:16px; background: linear-gradient(135deg, var(--text-bright) 0%, var(--sakura-light) 70%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
+          Join the conversation.<br>Your way.
+        </h1>
+        <p style="font-size:14px; color:var(--text-secondary); line-height:1.7; margin-bottom:36px;">
+          Sign up for free and immediately start sharing, discovering, and engaging with thousands of anonymous communities.
+        </p>
+
+        <div class="signup-stat">
+          <div class="stat-card">
+            <div>
+              <div class="stat-num">100%</div>
+              <div class="stat-label">Anonymous posting — always</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div>
+              <div class="stat-num">∞</div>
+              <div class="stat-label">Communities to explore and create</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:16px; background:rgba(232,96,138,0.05); border:1px solid rgba(232,96,138,0.12); border-radius:var(--radius-md);">
+          <p style="font-size:12px; color:var(--text-muted); line-height:1.6;">
+            <i class="fas fa-shield-alt" style="color:var(--sakura-mid); margin-right:6px;"></i>
+            Your username and email are kept private. The public only ever sees <strong style="color:var(--text-primary);">"Anonymous"</strong> on all posts and comments.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Form Panel -->
+    <div class="auth-panel-right">
+      <div class="auth-form-wrap">
+        <div style="margin-bottom:28px;">
+          <h2 style="font-family:'Playfair Display',serif; font-size:30px; font-weight:700; color:var(--text-bright); margin-bottom:6px;">Create account</h2>
+          <p style="font-size:14px; color:var(--text-muted);">Fill in your details to get started</p>
+        </div>
+
+        <div class="anon-note">
+          <i class="fas fa-info-circle anon-note-icon"></i>
+          <span class="anon-note-text">
+            Your username is used <strong>internally only</strong> to enforce ownership and permissions. It is <strong>never displayed</strong> on any public post or comment.
+          </span>
+        </div>
+
+        <form id="signup-form">
+          <div class="form-group">
+            <label class="form-label" for="signup-username">Username</label>
+            <div class="input-group">
+              <i class="fas fa-at input-icon"></i>
+              <input type="text" id="signup-username" class="form-control" required
+                placeholder="e.g. shadow_writer"
+                pattern="^[a-zA-Z0-9_]{3,20}$"
+                title="3–20 chars, letters, numbers and underscores only"
+                autocomplete="username">
+            </div>
+            <p class="mt-4" style="font-size:11px; color:var(--text-muted);">3–20 characters, letters/numbers/underscores only</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signup-email">Email address</label>
+            <div class="input-group">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" id="signup-email" class="form-control" required
+                placeholder="you@example.com"
+                autocomplete="email">
+            </div>
+            <p class="mt-4" style="font-size:11px; color:var(--text-muted);">Use @admin.com or @sup.com for admin role</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signup-password">Password</label>
+            <div class="input-group">
+              <i class="fas fa-lock input-icon"></i>
+              <input type="password" id="signup-password" class="form-control" required
+                placeholder="••••••••"
+                minlength="6"
+                autocomplete="new-password">
+              <i class="fas fa-eye password-toggle" id="toggle-pw"></i>
+            </div>
+            <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+            <p class="strength-label" id="strength-label">Enter a password</p>
+          </div>
+
+          <button type="submit" id="signup-submit" class="btn btn-primary w-full mt-8" style="justify-content:center;">
+            <i class="fas fa-user-plus"></i> Create Account
+          </button>
+        </form>
+
+        <div class="divider" style="margin:24px 0;"></div>
+
+        <p class="form-footer" style="text-align:center; color:var(--text-muted);">
+          Already have an account? <a href="login.html" style="color:var(--sakura-mid);font-weight:600;">Sign in</a>
+        </p>
+        <p style="text-align:center; font-size:11px; color:var(--text-ghost); margin-top:14px;">
+          By creating an account, you agree to our community guidelines.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLayout, signUp } from './js/auth.js';
+    import { showToast } from './js/utils.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initLayout();
+    });
+
+    // Password toggle
+    const togglePw = document.getElementById('toggle-pw');
+    const pwInput = document.getElementById('signup-password');
+    togglePw.addEventListener('click', () => {
+      const isText = pwInput.type === 'text';
+      pwInput.type = isText ? 'password' : 'text';
+      togglePw.className = isText ? 'fas fa-eye password-toggle' : 'fas fa-eye-slash password-toggle';
+    });
+
+    // Password strength meter
+    const strengthFill = document.getElementById('strength-fill');
+    const strengthLabel = document.getElementById('strength-label');
+    pwInput.addEventListener('input', () => {
+      const val = pwInput.value;
+      let score = 0;
+      if (val.length >= 6) score++;
+      if (val.length >= 10) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+
+      const colors = ['#ef4444','#f97316','#eab308','#22c55e','#16a34a'];
+      const labels = ['Too short','Weak','Fair','Good','Strong'];
+      const pct = (score / 5) * 100;
+      strengthFill.style.width = pct + '%';
+      strengthFill.style.background = colors[score - 1] || '#1e1729';
+      strengthLabel.textContent = labels[score - 1] || 'Enter a password';
+      strengthLabel.style.color = colors[score - 1] || 'var(--text-muted)';
+    });
+
+    const form = document.getElementById('signup-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('signup-username').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = pwInput.value;
+      const btn = document.getElementById('signup-submit');
+
+      // Assign role based on email domain
+      const role = email.endsWith('@admin.com') || email.endsWith('@sup.com') ? 'admin' : 'user';
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+
+      const { data, error } = await signUp(email, password, username, role);
+
+      if (!error && data.user) {
+        showToast('Account created! Redirecting to login...', 'success');
+        setTimeout(() => { window.location.href = 'login.html'; }, 1800);
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+      }
+    });
+  </script>
+</body>
+</html>

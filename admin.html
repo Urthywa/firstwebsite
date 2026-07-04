@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | SUP</title>
+  <meta name="description" content="SUP Admin Control Panel">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ─── Admin Layout ─── */
+    body { padding-top: 0; }
+
+    .admin-shell {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ─── Admin Sidebar ─── */
+    .admin-sidebar {
+      background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-void) 100%);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .admin-sidebar-header {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .admin-brand {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+    }
+    .admin-brand .logo-mark { width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
+    .admin-brand-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800;
+      background: var(--grad-sakura); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .admin-label {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: var(--radius-full);
+      background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.25);
+      color: var(--gold-mid); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+    }
+
+    .admin-nav { padding: 16px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .admin-nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--text-ghost); padding: 8px 10px 4px; margin-top: 8px; }
+
+    .admin-nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border-radius: var(--radius-md);
+      color: var(--text-secondary); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: var(--transition-fast);
+      border: none; background: none; width: 100%; text-align: left;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .admin-nav-item:hover { background: rgba(244,160,192,0.05); color: var(--text-primary); }
+    .admin-nav-item.active {
+      background: rgba(232,96,138,0.1); color: var(--sakura-mid);
+      border: 1px solid rgba(232,96,138,0.15);
+    }
+    .admin-nav-item .ani {
+      width: 32px; height: 32px; border-radius: var(--radius-sm);
+      background: var(--bg-float); display: flex; align-items: center;
+      justify-content: center; font-size: 13px; transition: var(--transition-fast); flex-shrink: 0;
+    }
+    .admin-nav-item.active .ani { background: rgba(232,96,138,0.15); color: var(--sakura-rose); }
+    .admin-nav-item:hover .ani { background: rgba(244,160,192,0.08); }
+
+    .admin-sidebar-footer {
+      padding: 16px 12px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    /* ─── Admin Main ─── */
+    .admin-main {
+      display: flex; flex-direction: column;
+      background: var(--bg-void);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── Top Bar ─── */
+    .admin-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(10,7,15,0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky; top: 0; z-index: 50;
+    }
+    .admin-topbar-left { display: flex; flex-direction: column; }
+    .admin-page-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--text-bright); }
+    .admin-page-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+    /* ─── Content Area ─── */
+    .admin-content { padding: 28px 32px; flex: 1; position: relative; }
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+
+    /* ─── Stat Cards ─── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 1100px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+
+    .stat-card {
+      background: var(--grad-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      box-shadow: var(--shadow-md);
+      position: relative; overflow: hidden;
+      transition: var(--transition-mid);
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(244,160,192,0.15), transparent);
+    }
+    .stat-accent { position: absolute; top: -20px; right: -20px; width: 80px; height: 80px;
+      border-radius: 50%; opacity: 0.08; }
+    .stat-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; margin-bottom: 14px;
+    }
+    .stat-num { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 800;
+      color: var(--text-bright); line-height: 1; margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+    /* ─── Data Tables ─── */
+    .admin-table-wrap {
+      background: var(--grad-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+    .admin-table-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .admin-table-title { font-size: 15px; font-weight: 600; color: var(--text-bright); display: flex; align-items: center; gap: 8px; }
+    .admin-search {
+      position: relative;
+    }
+    .admin-search input {
+      padding: 8px 14px 8px 36px;
+      background: var(--bg-float);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-full);
+      color: var(--text-primary);
+      font-size: 13px; font-family: 'Space Grotesk', sans-serif;
+      width: 220px;
+      transition: var(--transition-mid);
+    }
+    .admin-search input:focus { outline: none; border-color: var(--sakura-rose); width: 260px; }
+    .admin-search i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 12px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: rgba(0,0,0,0.15); }
+    thead th {
+      padding: 11px 16px; text-align: left;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); border-bottom: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border-subtle);
+      transition: var(--transition-fast);
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(244,160,192,0.03); }
+    tbody td {
+      padding: 13px 16px; font-size: 13px; color: var(--text-secondary);
+      vertical-align: middle;
+    }
+    td.td-title { color: var(--text-bright); font-weight: 500; max-width: 260px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    td.td-community { color: var(--sakura-mid); }
+    .td-actions { display: flex; gap: 6px; align-items: center; }
+
+    .tbl-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: var(--radius-sm);
+      font-size: 11px; font-weight: 600; cursor: pointer; border: none;
+      font-family: 'Space Grotesk', sans-serif; transition: var(--transition-fast);
+    }
+    .tbl-btn-view { background: rgba(244,160,192,0.08); border: 1px solid rgba(244,160,192,0.15); color: var(--sakura-mid); }
+    .tbl-btn-view:hover { background: rgba(244,160,192,0.15); }
+    .tbl-btn-edit { background: rgba(245,200,66,0.08); border: 1px solid rgba(245,200,66,0.2); color: var(--gold-mid); }
+    .tbl-btn-edit:hover { background: rgba(245,200,66,0.15); }
+    .tbl-btn-del { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); color: #f87171; }
+    .tbl-btn-del:hover { background: rgba(248,113,113,0.15); }
+
+    .table-pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .table-pagination span { font-size: 12px; color: var(--text-muted); }
+    .table-pagination .pag-btns { display: flex; gap: 6px; }
+    .pag-btn { padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);
+      background: var(--bg-float); color: var(--text-secondary); font-size: 12px; cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif; transition: var(--transition-fast); }
+    .pag-btn:hover { border-color: var(--border-mid); color: var(--text-primary); }
+    .pag-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* ─── User Cards ─── */
+    .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 14px; }
+    .user-card {
+      background: var(--grad-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      display: flex; flex-direction: column; gap: 12px;
+      transition: var(--transition-mid);
+    }
+    .user-card:hover { border-color: var(--border-soft); transform: translateY(-2px); }
+    .user-card-header { display: flex; gap: 12px; align-items: center; }
+    .user-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--grad-sakura);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 18px; flex-shrink: 0;
+      box-shadow: var(--shadow-sakura);
+    }
+    .user-id { font-size: 11px; color: var(--text-muted); font-family: monospace;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+    .user-stats { display: flex; gap: 12px; }
+    .user-stat { flex: 1; text-align: center; background: var(--bg-raised);
+      border-radius: var(--radius-sm); padding: 8px; }
+    .user-stat-num { font-weight: 700; font-size: 16px; color: var(--text-bright); }
+    .user-stat-label { font-size: 10px; color: var(--text-muted); }
+
+    /* ─── Edit Modal ─── */
+    .admin-modal {
+      position: fixed; inset: 0;
+      background: rgba(5,3,10,0.85);
+      backdrop-filter: blur(10px);
+      z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: var(--transition-mid);
+    }
+    .admin-modal.active { opacity: 1; pointer-events: all; }
+    .admin-modal-box {
+      background: var(--bg-float);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-xl);
+      padding: 30px;
+      width: 100%; max-width: 500px;
+      box-shadow: var(--shadow-xl);
+      transform: scale(0.92) translateY(20px);
+      transition: var(--transition-bounce);
+    }
+    .admin-modal.active .admin-modal-box { transform: scale(1) translateY(0); }
+    .admin-modal-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700;
+      color: var(--text-bright); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+    /* ─── Loading ─── */
+    .admin-loading {
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+      padding: 60px 20px; color: var(--text-muted); font-size: 14px;
+    }
+
+    /* ─── Confirm ─── */
+    .confirm-overlay {
+      position: fixed; inset: 0; background: rgba(5,3,10,0.85); backdrop-filter: blur(8px);
+      z-index: 3000; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: var(--transition-mid);
+    }
+    .confirm-overlay.active { opacity: 1; pointer-events: all; }
+    .confirm-box {
+      background: var(--bg-float); border: 1px solid rgba(248,113,113,0.3);
+      border-radius: var(--radius-xl); padding: 28px; max-width: 380px; width: 90%;
+      box-shadow: var(--shadow-xl), 0 0 0 1px rgba(248,113,113,0.1);
+      transform: scale(0.9); transition: var(--transition-bounce);
+    }
+    .confirm-overlay.active .confirm-box { transform: scale(1); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .admin-shell { grid-template-columns: 1fr; }
+      .admin-sidebar { position: fixed; left: -260px; transition: var(--transition-mid); z-index: 200; }
+      .admin-sidebar.open { left: 0; }
+      .admin-content { padding: 20px 16px; }
+      .admin-topbar { padding: 14px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <!-- Confirm Dialog -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <span style="width:40px;height:40px;border-radius:50%;background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);display:flex;align-items:center;justify-content:center;color:#f87171;font-size:18px;">
+          <i class="fas fa-triangle-exclamation"></i>
+        </span>
+        <h3 style="font-size:17px;font-weight:700;color:var(--text-bright);">Confirm Delete</h3>
+      </div>
+      <p id="confirm-message" style="font-size:14px;color:var(--text-secondary);margin-bottom:22px;line-height:1.6;"></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-ghost btn-sm" id="confirm-cancel">Cancel</button>
+        <button class="btn btn-danger btn-sm" id="confirm-ok"><i class="fas fa-trash-alt"></i> Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Community Modal -->
+  <div class="admin-modal" id="edit-comm-modal">
+    <div class="admin-modal-box">
+      <div class="admin-modal-title">
+        <span style="width:34px;height:34px;border-radius:50%;background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);display:flex;align-items:center;justify-content:center;color:var(--gold-mid);">
+          <i class="fas fa-pen"></i>
+        </span>
+        Edit Community
+      </div>
+      <form id="edit-comm-form">
+        <input type="hidden" id="edit-comm-id">
+        <div class="form-group">
+          <label class="form-label">Community Name</label>
+          <input type="text" id="edit-comm-name" class="form-control" required maxlength="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="edit-comm-desc" class="form-control" maxlength="300"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Icon URL</label>
+          <input type="url" id="edit-comm-icon" class="form-control" placeholder="https://...">
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-subtle);">
+          <button type="button" class="btn btn-ghost btn-sm" id="edit-comm-cancel">Cancel</button>
+          <button type="submit" class="btn btn-gold btn-sm" id="edit-comm-save">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="admin-shell">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-brand">
+          <div class="logo-mark">S</div>
+          <span class="admin-brand-name">SUP</span>
+        </div>
+        <div class="admin-label"><i class="fas fa-crown"></i> Admin Panel</div>
+      </div>
+
+      <nav class="admin-nav">
+        <span class="admin-nav-section">Overview</span>
+        <button class="admin-nav-item active" data-section="dashboard">
+          <span class="ani"><i class="fas fa-chart-pie"></i></span>
+          Dashboard
+        </button>
+
+        <span class="admin-nav-section">Content</span>
+        <button class="admin-nav-item" data-section="posts">
+          <span class="ani"><i class="fas fa-file-lines"></i></span>
+          All Posts
+          <span id="nav-posts-count" style="margin-left:auto;font-size:10px;background:rgba(232,96,138,0.12);border:1px solid rgba(232,96,138,0.2);padding:1px 6px;border-radius:var(--radius-full);color:var(--sakura-mid);"></span>
+        </button>
+        <button class="admin-nav-item" data-section="comments">
+          <span class="ani"><i class="fas fa-comments"></i></span>
+          All Comments
+          <span id="nav-comments-count" style="margin-left:auto;font-size:10px;background:rgba(232,96,138,0.12);border:1px solid rgba(232,96,138,0.2);padding:1px 6px;border-radius:var(--radius-full);color:var(--sakura-mid);"></span>
+        </button>
+        <button class="admin-nav-item" data-section="communities">
+          <span class="ani"><i class="fas fa-compass"></i></span>
+          Communities
+        </button>
+
+        <span class="admin-nav-section">People</span>
+        <button class="admin-nav-item" data-section="users">
+          <span class="ani"><i class="fas fa-users"></i></span>
+          Users
+        </button>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <a href="index.html" class="btn btn-primary btn-sm" style="justify-content:center;text-decoration:none;">
+          <i class="fas fa-arrow-right-from-bracket"></i> Visit Site
+        </a>
+        <button class="btn btn-ghost btn-sm" id="admin-logout-btn" style="justify-content:center;">
+          <i class="fas fa-sign-out-alt"></i> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="admin-main">
+      <!-- Top Bar -->
+      <div class="admin-topbar">
+        <div class="admin-topbar-left">
+          <span class="admin-page-title" id="page-title">Dashboard</span>
+          <span class="admin-page-sub" id="page-sub">Overview of platform activity</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="badge badge-admin"><i class="fas fa-crown"></i> Administrator</div>
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--grad-sakura);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;box-shadow:var(--shadow-sakura);">
+            <i class="fas fa-user-shield"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="admin-content">
+
+        <!-- ── Dashboard Section ── -->
+        <section class="admin-section active" id="section-dashboard">
+          <!-- Stat Cards -->
+          <div class="stat-grid" id="stats-grid">
+            <div class="stat-card">
+              <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--sakura-rose);border-radius:50%;opacity:0.06;"></div>
+              <div class="stat-icon" style="background:rgba(232,96,138,0.12);color:var(--sakura-rose);">
+                <i class="fas fa-file-lines"></i>
+              </div>
+              <div class="stat-num" id="stat-posts">—</div>
+              <div class="stat-label">Total Posts</div>
+            </div>
+            <div class="stat-card">
+              <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--gold-mid);border-radius:50%;opacity:0.06;"></div>
+              <div class="stat-icon" style="background:rgba(245,200,66,0.1);color:var(--gold-mid);">
+                <i class="fas fa-comments"></i>
+              </div>
+              <div class="stat-num" id="stat-comments">—</div>
+              <div class="stat-label">Total Comments</div>
+            </div>
+            <div class="stat-card">
+              <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:#a78bfa;border-radius:50%;opacity:0.06;"></div>
+              <div class="stat-icon" style="background:rgba(167,139,250,0.1);color:#a78bfa;">
+                <i class="fas fa-compass"></i>
+              </div>
+              <div class="stat-num" id="stat-communities">—</div>
+              <div class="stat-label">Communities</div>
+            </div>
+            <div class="stat-card">
+              <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:#34d399;border-radius:50%;opacity:0.06;"></div>
+              <div class="stat-icon" style="background:rgba(52,211,153,0.1);color:#34d399;">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="stat-num" id="stat-members">—</div>
+              <div class="stat-label">Memberships</div>
+            </div>
+          </div>
+
+          <!-- Recent Posts Preview -->
+          <div class="admin-table-wrap">
+            <div class="admin-table-header">
+              <span class="admin-table-title"><i class="fas fa-clock" style="color:var(--sakura-rose);"></i> Recent Posts</span>
+              <button class="btn btn-ghost btn-sm" onclick="switchSection('posts')">View All</button>
+            </div>
+            <div id="dashboard-recent-posts">
+              <div class="admin-loading"><i class="fas fa-circle-notch fa-spin fa-lg"></i> Loading...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Posts Section ── -->
+        <section class="admin-section" id="section-posts">
+          <div class="admin-table-wrap">
+            <div class="admin-table-header">
+              <span class="admin-table-title"><i class="fas fa-file-lines" style="color:var(--sakura-rose);"></i> All Posts</span>
+              <div class="admin-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="posts-search" placeholder="Search posts...">
+              </div>
+            </div>
+            <div id="posts-table-body">
+              <div class="admin-loading"><i class="fas fa-circle-notch fa-spin fa-lg"></i></div>
+            </div>
+            <div class="table-pagination">
+              <span id="posts-page-info">Page 1</span>
+              <div class="pag-btns">
+                <button class="pag-btn" id="posts-prev" disabled><i class="fas fa-chevron-left"></i> Prev</button>
+                <button class="pag-btn" id="posts-next">Next <i class="fas fa-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Comments Section ── -->
+        <section class="admin-section" id="section-comments">
+          <div class="admin-table-wrap">
+            <div class="admin-table-header">
+              <span class="admin-table-title"><i class="fas fa-comments" style="color:var(--sakura-rose);"></i> All Comments</span>
+              <div class="admin-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="comments-search" placeholder="Search comments...">
+              </div>
+            </div>
+            <div id="comments-table-body">
+              <div class="admin-loading"><i class="fas fa-circle-notch fa-spin fa-lg"></i></div>
+            </div>
+            <div class="table-pagination">
+              <span id="comments-page-info">Page 1</span>
+              <div class="pag-btns">
+                <button class="pag-btn" id="comments-prev" disabled><i class="fas fa-chevron-left"></i> Prev</button>
+                <button class="pag-btn" id="comments-next">Next <i class="fas fa-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Communities Section ── -->
+        <section class="admin-section" id="section-communities">
+          <div class="admin-table-wrap">
+            <div class="admin-table-header">
+              <span class="admin-table-title"><i class="fas fa-compass" style="color:var(--sakura-rose);"></i> All Communities</span>
+              <a href="create-community.html" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> New Community
+              </a>
+            </div>
+            <div id="communities-table-body">
+              <div class="admin-loading"><i class="fas fa-circle-notch fa-spin fa-lg"></i></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Users Section ── -->
+        <section class="admin-section" id="section-users">
+          <div style="background:rgba(245,200,66,0.04);border:1px solid rgba(245,200,66,0.15);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+            <i class="fas fa-info-circle" style="color:var(--gold-mid);"></i>
+            <p style="font-size:12px;color:var(--text-secondary);">Users are identified by activity. Deleting a user's content removes all their posts and comments permanently.</p>
+          </div>
+          <div class="user-grid" id="users-grid">
+            <div class="admin-loading" style="grid-column:1/-1;"><i class="fas fa-circle-notch fa-spin fa-lg"></i></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { getCurrentUser, logOut } from './js/auth.js';
+    import { showToast } from './js/utils.js';
+    import {
+      adminGetStats,
+      adminFetchAllPosts, adminDeletePost,
+      adminFetchAllComments, adminDeleteComment,
+      adminFetchAllCommunities, adminUpdateCommunity, adminDeleteCommunity,
+      adminFetchUsers, adminDeleteUserContent
+    } from './js/admin.js';
+
+    // ── Auth Guard ───────────────────────────────────────────────────────────
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      window.location.href = 'login.html'; throw null;
+    }
+    const role = currentUser?.user_metadata?.role || 'user';
+    if (role !== 'admin') {
+      showToast('Access denied: Admin only', 'error');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+      throw null;
+    }
+
+    // ── State ────────────────────────────────────────────────────────────────
+    let postsPage     = 0;
+    let commentsPage  = 0;
+    let allPosts      = [];
+    let allComments   = [];
+    let allCommunities = [];
+    let allUsers      = [];
+    let postsTotal    = 0;
+    let commentsTotal = 0;
+    const PAGE_LIMIT  = 20;
+
+    let pendingConfirm = null;
+
+    // ── Section Navigation ───────────────────────────────────────────────────
+    window.switchSection = function(section) {
+      document.querySelectorAll('.admin-nav-item').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.section === section);
+      });
+      document.querySelectorAll('.admin-section').forEach(s => {
+        s.classList.toggle('active', s.id === `section-${section}`);
+      });
+
+      const titles = {
+        dashboard:   ['Dashboard', 'Overview of platform activity'],
+        posts:       ['All Posts', 'Manage and moderate user posts'],
+        comments:    ['All Comments', 'Manage and moderate user comments'],
+        communities: ['Communities', 'Manage community spaces'],
+        users:       ['Users', 'View and manage user activity'],
+      };
+      const [title, sub] = titles[section] || ['Admin', ''];
+      document.getElementById('page-title').textContent = title;
+      document.getElementById('page-sub').textContent   = sub;
+
+      // Lazy-load sections
+      if (section === 'posts' && !allPosts.length) loadPosts();
+      if (section === 'comments' && !allComments.length) loadComments();
+      if (section === 'communities' && !allCommunities.length) loadCommunities();
+      if (section === 'users' && !allUsers.length) loadUsers();
+    };
+
+    document.querySelectorAll('.admin-nav-item').forEach(btn => {
+      btn.addEventListener('click', () => switchSection(btn.dataset.section));
+    });
+
+    // ── Logout ───────────────────────────────────────────────────────────────
+    document.getElementById('admin-logout-btn').addEventListener('click', logOut);
+
+    // ── Confirm Dialog ───────────────────────────────────────────────────────
+    const confirmOverlay = document.getElementById('confirm-overlay');
+    document.getElementById('confirm-cancel').addEventListener('click', () => {
+      confirmOverlay.classList.remove('active');
+      pendingConfirm = null;
+    });
+    document.getElementById('confirm-ok').addEventListener('click', async () => {
+      confirmOverlay.classList.remove('active');
+      if (pendingConfirm) { await pendingConfirm(); pendingConfirm = null; }
+    });
+    function confirmAction(message, action) {
+      document.getElementById('confirm-message').textContent = message;
+      pendingConfirm = action;
+      confirmOverlay.classList.add('active');
+    }
+
+    // ── Edit Community Modal ─────────────────────────────────────────────────
+    const editModal = document.getElementById('edit-comm-modal');
+    document.getElementById('edit-comm-cancel').addEventListener('click', () => editModal.classList.remove('active'));
+    document.getElementById('edit-comm-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id   = document.getElementById('edit-comm-id').value;
+      const name = document.getElementById('edit-comm-name').value.trim();
+      const desc = document.getElementById('edit-comm-desc').value.trim();
+      const icon = document.getElementById('edit-comm-icon').value.trim() || null;
+      const btn  = document.getElementById('edit-comm-save');
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      const { error } = await adminUpdateCommunity(id, { name, description: desc, icon_url: icon });
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+      if (!error) {
+        showToast('Community updated!', 'success');
+        editModal.classList.remove('active');
+        allCommunities = [];
+        loadCommunities();
+      } else {
+        showToast('Error saving changes', 'error');
+      }
+    });
+    function openEditModal(comm) {
+      document.getElementById('edit-comm-id').value   = comm.id;
+      document.getElementById('edit-comm-name').value = comm.name;
+      document.getElementById('edit-comm-desc').value = comm.description || '';
+      document.getElementById('edit-comm-icon').value = comm.icon_url || '';
+      editModal.classList.add('active');
+    }
+
+    // ── Stats ────────────────────────────────────────────────────────────────
+    async function loadStats() {
+      const stats = await adminGetStats();
+      document.getElementById('stat-posts').textContent       = stats.posts.toLocaleString();
+      document.getElementById('stat-comments').textContent    = stats.comments.toLocaleString();
+      document.getElementById('stat-communities').textContent = stats.communities.toLocaleString();
+      document.getElementById('stat-members').textContent     = stats.members.toLocaleString();
+      document.getElementById('nav-posts-count').textContent    = stats.posts;
+      document.getElementById('nav-comments-count').textContent = stats.comments;
+    }
+
+    // ── Recent Posts on Dashboard ────────────────────────────────────────────
+    async function loadDashboardRecent() {
+      const container = document.getElementById('dashboard-recent-posts');
+      const { data: posts } = await adminFetchAllPosts(0, 8);
+      if (!posts.length) {
+        container.innerHTML = `<div class="admin-loading">No posts yet.</div>`;
+        return;
+      }
+      container.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Title</th><th>Community</th><th>Score</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${posts.map(p => `
+              <tr>
+                <td class="td-title">${escHtml(p.title)}</td>
+                <td class="td-community">${p.communities ? `s/${p.communities.slug}` : '—'}</td>
+                <td>${p.score}</td>
+                <td>${fmtDate(p.created_at)}</td>
+                <td class="td-actions">
+                  <button class="tbl-btn tbl-btn-view" onclick="window.open('post.html?id=${p.id}','_blank')">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                  <button class="tbl-btn tbl-btn-del" data-del-post="${p.id}" data-del-title="${escHtml(p.title)}">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      container.addEventListener('click', handlePostDelete);
+    }
+
+    // ── Posts Table ───────────────────────────────────────────────────────────
+    async function loadPosts() {
+      const container = document.getElementById('posts-table-body');
+      container.innerHTML = `<div class="admin-loading"><i class="fas fa-circle-notch fa-spin fa-lg"></i></div>`;
+      const { data, count } = await adminFetchAllPosts(postsPage, PAGE_LIMIT);
+      allPosts = data;
+      postsTotal = count;
+      renderPostsTable();
+    }
+
+    function renderPostsTable(filter = '') {
+      const container = document.getElementById('posts-table-body');
+      const filtered = filter
+        ? allPosts.filter(p => p.title.toLowerCase().includes(filter) || (p.body||'').toLowerCase().includes(filter))
+        : allPosts;
+
+      if (!filtered.length) {
+        container.innerHTML = `<div class="admin-loading">No posts found.</div>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Title</th><th>Community</th><th>Type</th><th>Score</th><th>Comments</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${filtered.map(p => `
+              <tr>
+                <td class="td-title" title="${escHtml(p.title)}">${escHtml(p.title)}</td>
+                <td class="td-community">${p.communities ? `s/${p.communities.slug}` : '—'}</td>
+                <td><span style="font-size:11px;padding:2px 7px;border-radius:var(--radius-full);background:var(--bg-float);border:1px solid var(--border-soft);">${p.post_type}</span></td>
+                <td style="color:${p.score>=0?'var(--sakura-mid)':'#f87171'};">${p.score > 0 ? '+' : ''}${p.score}</td>
+                <td>${p.commentCount}</td>
+                <td>${fmtDate(p.created_at)}</td>
+                <td class="td-actions">
+                  <button class="tbl-btn tbl-btn-view" onclick="window.open('post.html?id=${p.id}','_blank')">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="tbl-btn tbl-btn-del" data-del-post="${p.id}" data-del-title="${escHtml(p.title)}">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      container.addEventListener('click', handlePostDelete);
+
+      const info = document.getElementById('posts-page-info');
+      info.textContent = `Page ${postsPage+1} • Showing ${filtered.length} of ${postsTotal} posts`;
+      document.getElementById('posts-prev').disabled = postsPage === 0;
+      document.getElementById('posts-next').disabled = (postsPage+1)*PAGE_LIMIT >= postsTotal;
+    }
+
+    function handlePostDelete(e) {
+      const btn = e.target.closest('[data-del-post]');
+      if (!btn) return;
+      const id = btn.dataset.delPost;
+      const title = btn.dataset.delTitle || 'this post';
+      confirmAction(`Are you sure you want to permanently delete "${title}"? This cannot be undone.`, async () => {
+        const ok = await adminDeletePost(id);
+        if (ok) {
+          showToast('Post deleted', 'success');
+          allPosts = allPosts.filter(p => p.id !== id);
+          postsTotal = Math.max(0, postsTotal - 1);
+          renderPostsTable(document.getElementById('posts-search')?.value || '');
+          loadStats();
+        } else {
+          showToast('Error deleting post', 'error');
+        }
+      });
+    }
+
+    document.getElementById('posts-prev').addEventListener('click', () => { postsPage--; loadPosts(); });
+    document.getElementById('posts-next').addEventListener('click', () => { postsPage++; loadPosts(); });
+
+    let postsSearchTimeout;
+    document.getElementById('posts-search').addEventListener('input', (e) => {
+      clearTimeout(postsSearchTimeout);
+      postsSearchTimeout = setTimeout(() => renderPostsTable(e.target.value.trim().toLowerCase()), 300);
+    });
+
+    // ── Comments Table ────────────────────────────────────────────────────────
+    async function loadComments() {
+      const container = document.getElementById('comments-table-body');
+      container.innerHTML = `<div class="admin-loading"><i class="fas fa-circle-notch fa-spin fa-lg"></i></div>`;
+      const { data, count } = await adminFetchAllComments(commentsPage, PAGE_LIMIT);
+      allComments = data;
+      commentsTotal = count;
+      renderCommentsTable();
+    }
+
+    function renderCommentsTable(filter = '') {
+      const container = document.getElementById('comments-table-body');
+      const filtered = filter
+        ? allComments.filter(c => c.body.toLowerCase().includes(filter))
+        : allComments;
+
+      if (!filtered.length) {
+        container.innerHTML = `<div class="admin-loading">No comments found.</div>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Comment</th><th>Post</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${filtered.map(c => `
+              <tr>
+                <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary);">${escHtml(c.body)}</td>
+                <td class="td-community">
+                  ${c.posts ? `<a href="post.html?id=${c.posts.id}" target="_blank" style="color:var(--sakura-mid);text-decoration:none;font-size:12px;">${escHtml(c.posts.title).substring(0,40)}...</a>` : '—'}
+                </td>
+                <td>${fmtDate(c.created_at)}</td>
+                <td class="td-actions">
+                  ${c.posts ? `<button class="tbl-btn tbl-btn-view" onclick="window.open('post.html?id=${c.posts.id}','_blank')"><i class="fas fa-eye"></i></button>` : ''}
+                  <button class="tbl-btn tbl-btn-del" data-del-comment="${c.id}">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-del-comment]');
+        if (!btn) return;
+        const id = btn.dataset.delComment;
+        confirmAction('Delete this comment permanently? This cannot be undone.', async () => {
+          const ok = await adminDeleteComment(id);
+          if (ok) {
+            showToast('Comment deleted', 'success');
+            allComments = allComments.filter(c => c.id !== id);
+            commentsTotal = Math.max(0, commentsTotal - 1);
+            renderCommentsTable(document.getElementById('comments-search')?.value || '');
+            loadStats();
+          } else { showToast('Error deleting comment', 'error'); }
+        });
+      });
+
+      const info = document.getElementById('comments-page-info');
+      info.textContent = `Page ${commentsPage+1} • Showing ${filtered.length} of ${commentsTotal} comments`;
+      document.getElementById('comments-prev').disabled = commentsPage === 0;
+      document.getElementById('comments-next').disabled = (commentsPage+1)*PAGE_LIMIT >= commentsTotal;
+    }
+
+    document.getElementById('comments-prev').addEventListener('click', () => { commentsPage--; loadComments(); });
+    document.getElementById('comments-next').addEventListener('click', () => { commentsPage++; loadComments(); });
+
+    let commentsSearchTimeout;
+    document.getElementById('comments-search').addEventListener('input', (e) => {
+      clearTimeout(commentsSearchTimeout);
+      commentsSearchTimeout = setTimeout(() => renderCommentsTable(e.target.value.trim().toLowerCase()), 300);
+    });
+
+    // ── Communities Table ─────────────────────────────────────────────────────
+    async function loadCommunities() {
+      const container = document.getElementById('communities-table-body');
+      container.innerHTML = `<div class="admin-loading"><i class="fas fa-circle-notch fa-spin fa-lg"></i></div>`;
+      const { data } = await adminFetchAllCommunities();
+      allCommunities = data;
+      renderCommunitiesTable();
+    }
+
+    function renderCommunitiesTable() {
+      const container = document.getElementById('communities-table-body');
+      if (!allCommunities.length) {
+        container.innerHTML = `<div class="admin-loading">No communities yet.</div>`;
+        return;
+      }
+      container.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Name</th><th>Slug</th><th>Description</th><th>Created</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${allCommunities.map(c => `
+              <tr>
+                <td style="font-weight:600;color:var(--text-bright);">
+                  ${c.icon_url ? `<img src="${escHtml(c.icon_url)}" style="width:22px;height:22px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:8px;" onerror="this.remove()">` : ''}
+                  ${escHtml(c.name)}
+                </td>
+                <td class="td-community">s/${escHtml(c.slug)}</td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-muted);">${escHtml(c.description || '—')}</td>
+                <td>${fmtDate(c.created_at)}</td>
+                <td class="td-actions">
+                  <button class="tbl-btn tbl-btn-view" onclick="window.open('community.html?slug=${escHtml(c.slug)}','_blank')">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="tbl-btn tbl-btn-edit" data-edit-comm='${JSON.stringify({id:c.id,name:c.name,description:c.description,icon_url:c.icon_url})}'>
+                    <i class="fas fa-pen"></i> Edit
+                  </button>
+                  <button class="tbl-btn tbl-btn-del" data-del-comm="${c.id}" data-del-name="${escHtml(c.name)}">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      container.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('[data-edit-comm]');
+        if (editBtn) { openEditModal(JSON.parse(editBtn.dataset.editComm)); return; }
+
+        const delBtn = e.target.closest('[data-del-comm]');
+        if (delBtn) {
+          const id   = delBtn.dataset.delComm;
+          const name = delBtn.dataset.delName;
+          confirmAction(`Delete community "${name}"? All posts within it will also be deleted.`, async () => {
+            const ok = await adminDeleteCommunity(id);
+            if (ok) {
+              showToast('Community deleted', 'success');
+              allCommunities = allCommunities.filter(c => c.id !== id);
+              renderCommunitiesTable();
+              loadStats();
+            } else { showToast('Error deleting community', 'error'); }
+          });
+        }
+      });
+    }
+
+    // ── Users Grid ────────────────────────────────────────────────────────────
+    async function loadUsers() {
+      const grid = document.getElementById('users-grid');
+      grid.innerHTML = `<div class="admin-loading" style="grid-column:1/-1;"><i class="fas fa-circle-notch fa-spin fa-lg"></i></div>`;
+      allUsers = await adminFetchUsers();
+
+      if (!allUsers.length) {
+        grid.innerHTML = `<div class="admin-loading" style="grid-column:1/-1;">No users with activity found.</div>`;
+        return;
+      }
+
+      grid.innerHTML = allUsers.map((u, idx) => `
+        <div class="user-card">
+          <div class="user-card-header">
+            <div class="user-avatar"><i class="fas fa-user-secret"></i></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12px;font-weight:600;color:var(--text-bright);margin-bottom:2px;">User #${idx+1}</div>
+              <div class="user-id" title="${u.id}">${u.id}</div>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">First seen ${fmtDate(u.firstSeen)}</div>
+            </div>
+          </div>
+          <div class="user-stats">
+            <div class="user-stat">
+              <div class="user-stat-num" style="color:var(--sakura-rose);">${u.postCount}</div>
+              <div class="user-stat-label">Posts</div>
+            </div>
+            <div class="user-stat">
+              <div class="user-stat-num" style="color:var(--gold-mid);">${u.commentCount}</div>
+              <div class="user-stat-label">Comments</div>
+            </div>
+            <div class="user-stat">
+              <div class="user-stat-num">${u.postCount + u.commentCount}</div>
+              <div class="user-stat-label">Total</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="tbl-btn tbl-btn-del" style="flex:1;justify-content:center;" data-del-user="${u.id}">
+              <i class="fas fa-trash-alt"></i> Delete All Content
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      grid.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-del-user]');
+        if (!btn) return;
+        const userId = btn.dataset.delUser;
+        const userIdx = allUsers.findIndex(u => u.id === userId);
+        confirmAction(
+          `Delete ALL posts and comments by User #${userIdx+1}? This permanently removes ${allUsers[userIdx].postCount} posts and ${allUsers[userIdx].commentCount} comments.`,
+          async () => {
+            await adminDeleteUserContent(userId);
+            showToast('User content deleted', 'success');
+            allUsers = [];
+            loadUsers();
+            allPosts = []; allComments = [];
+            loadStats();
+          }
+        );
+      });
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str || '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+    function fmtDate(iso) {
+      return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    await loadStats();
+    await loadDashboardRecent();
+  </script>
+</body>
+</html>

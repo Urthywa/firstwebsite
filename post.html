@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post | SUP</title>
+  <meta name="description" content="View post and comments on SUP">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <div id="navbar-placeholder"></div>
+
+  <div class="container">
+    <div id="sidebar-left-placeholder"></div>
+
+    <main class="page-main">
+
+      <!-- Post Detail Card -->
+      <div id="post-detail-container" class="post-detail-view animate-up">
+        <div class="skeleton-card">
+          <div class="skeleton-item skeleton-title"></div>
+          <div class="skeleton-item skeleton-text"></div>
+          <div class="skeleton-item skeleton-meta"></div>
+        </div>
+      </div>
+
+      <!-- Comments Section -->
+      <section class="comments-section animate-up-delay-1" style="position:relative;">
+
+        <!-- Comment Form -->
+        <div id="main-comment-form-box" style="margin-bottom:24px;">
+          <h3 style="font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+            <span style="width:28px;height:28px;border-radius:50%;background:rgba(232,96,138,0.1);border:1px solid rgba(232,96,138,0.2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--sakura-rose);">
+              <i class="fas fa-comment"></i>
+            </span>
+            Leave a Comment
+          </h3>
+          <form id="post-comment-form">
+            <div class="form-group" style="margin-bottom:12px;">
+              <textarea id="comment-body-input" class="form-control" style="min-height:90px;resize:vertical;"
+                placeholder="Share your thoughts anonymously..." required></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Comment Anonymously
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Sort + Count Bar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <span style="font-size:13px;color:var(--text-muted);" id="comments-count-label">
+            <i class="fas fa-comments" style="margin-right:5px;"></i> Loading comments...
+          </span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:var(--text-muted);">Sort:</span>
+            <select id="comments-sort" class="form-control" style="padding:5px 10px;font-size:12px;width:88px;border-radius:var(--radius-sm);">
+              <option value="top">Top</option>
+              <option value="new">New</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Comment Tree -->
+        <ul class="comment-list" id="comments-tree-root" style="list-style:none;">
+          <li style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;">
+            <i class="fas fa-circle-notch fa-spin" style="margin-right:6px;"></i> Loading comments...
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <div id="sidebar-right-placeholder"></div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { initLayout, getCurrentUser } from './js/auth.js';
+    import { fetchPostById, renderPostCardHTML } from './js/posts.js';
+    import { fetchCommentsTree, createComment } from './js/comments.js';
+    import { initVotingListeners, voteOnComment } from './js/votes.js';
+    import { getQueryParams, showToast } from './js/utils.js';
+    import { supabase } from './js/supabaseClient.js';
+
+    let postId = null;
+    let currentUser = null;
+    let commentsSort = 'top';
+    let isAdmin = false;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      currentUser = await getCurrentUser();
+      await initLayout();
+
+      // Check if admin
+      isAdmin = currentUser?.user_metadata?.role === 'admin';
+
+      const params = getQueryParams();
+      postId = params.id;
+      if (!postId) { window.location.href = 'index.html'; return; }
+
+      await loadPostDetails();
+      await loadComments();
+
+      document.getElementById('comments-sort').addEventListener('change', (e) => {
+        commentsSort = e.target.value;
+        loadComments();
+      });
+
+      document.getElementById('post-comment-form').addEventListener('submit', handleCommentSubmit);
+      initVotingListeners(document.getElementById('post-detail-container'));
+      setupCommentsHandlers();
+
+      // Admin: delete post button
+      if (isAdmin) {
+        document.getElementById('post-detail-container').addEventListener('click', async (e) => {
+          const delBtn = e.target.closest('[data-admin-del-post]');
+          if (delBtn) {
+            const pid = delBtn.dataset.adminDelPost;
+            if (!confirm('Delete this post? This cannot be undone.')) return;
+            const { error } = await supabase.from('posts').delete().eq('id', pid);
+            if (!error) {
+              showToast('Post deleted', 'success');
+              setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+            } else {
+              showToast('Error deleting post', 'error');
+            }
+          }
+        });
+      }
+    });
+
+    async function loadPostDetails() {
+      const container = document.getElementById('post-detail-container');
+      const { data: post, error } = await fetchPostById(postId);
+
+      if (error || !post) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon">❌</span>
+            <h3 class="empty-title">Post not found</h3>
+            <p class="empty-text">This post may have been deleted or doesn't exist.</p>
+            <a href="index.html" class="btn btn-ghost" style="margin-top:16px;">Back to Feed</a>
+          </div>
+        `;
+        document.getElementById('main-comment-form-box').style.display = 'none';
+        return;
+      }
+
+      let adminDeleteBtn = '';
+      if (isAdmin) {
+        adminDeleteBtn = `
+          <button class="admin-delete-btn" data-admin-del-post="${post.id}" title="Admin: delete this post">
+            <i class="fas fa-trash-alt"></i> Delete Post
+          </button>
+        `;
+      }
+
+      container.innerHTML = renderPostCardHTML(post);
+
+      // Add admin delete to footer
+      if (isAdmin) {
+        const footer = container.querySelector('.post-footer');
+        if (footer) {
+          const span = document.createElement('span');
+          span.innerHTML = `<button class="admin-delete-btn" data-admin-del-post="${post.id}" style="margin-left:4px;"><i class="fas fa-trash-alt"></i> Admin Delete</button>`;
+          footer.appendChild(span);
+        }
+      }
+
+      // Expand post body (no clamp in detail view)
+      const bodyEl = container.querySelector('.post-body');
+      if (bodyEl) { bodyEl.style.webkitLineClamp = 'unset'; bodyEl.style.overflow = 'visible'; bodyEl.style.display = 'block'; }
+
+      const card = container.querySelector('.post-card');
+      if (card) card.classList.add('post-detail-view');
+
+      document.title = `${post.title} | SUP`;
+    }
+
+    async function loadComments() {
+      const treeRoot   = document.getElementById('comments-tree-root');
+      const countLabel = document.getElementById('comments-count-label');
+
+      treeRoot.innerHTML = `<li style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;"><i class="fas fa-circle-notch fa-spin" style="margin-right:6px;"></i></li>`;
+
+      const { data: comments, error } = await fetchCommentsTree(postId, commentsSort);
+
+      if (error) {
+        treeRoot.innerHTML = `<li style="color:#f87171;text-align:center;padding:20px;">Failed to load comments.</li>`;
+        return;
+      }
+
+      const total = countAll(comments);
+      countLabel.innerHTML = `<i class="fas fa-comments" style="margin-right:5px;"></i> ${total} comment${total !== 1 ? 's' : ''}`;
+
+      if (!comments || comments.length === 0) {
+        treeRoot.innerHTML = `<li style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;">No comments yet. Be the first!</li>`;
+        return;
+      }
+
+      treeRoot.innerHTML = comments.map(c => renderCommentHTML(c)).join('');
+    }
+
+    function countAll(nodes) {
+      if (!nodes) return 0;
+      return nodes.reduce((sum, n) => sum + 1 + countAll(n.children), 0);
+    }
+
+    function renderCommentHTML(c) {
+      const isUp   = c.userVote === 1;
+      const isDown = c.userVote === -1;
+
+      const adminActions = isAdmin ? `
+        <button class="comment-action-btn btn-admin-del-comment" data-comment-id="${c.id}" style="color:#f87171;">
+          <i class="fas fa-trash-alt"></i> Delete
+        </button>
+      ` : '';
+
+      const childrenHTML = c.children?.length
+        ? `<div class="comment-children">${c.children.map(child => renderCommentHTML(child)).join('')}</div>`
+        : '';
+
+      return `
+        <li class="comment-node" id="comment-${c.id}">
+          <div class="comment-content">
+            <div class="comment-vote-panel">
+              <button class="vote-btn up ${isUp ? 'active' : ''}" data-comment-id="${c.id}" aria-label="Upvote"><i class="fas fa-arrow-up"></i></button>
+              <span class="vote-score ${isUp ? 'up-active' : ''} ${isDown ? 'down-active' : ''}" id="cscore-${c.id}">${c.score}</span>
+              <button class="vote-btn down ${isDown ? 'active' : ''}" data-comment-id="${c.id}" aria-label="Downvote"><i class="fas fa-arrow-down"></i></button>
+            </div>
+            <div style="flex:1;">
+              <div class="comment-meta">
+                <span style="color:var(--text-secondary);font-weight:600;">Anonymous</span>
+                <span>•</span>
+                <span>${new Date(c.created_at).toLocaleDateString()}</span>
+              </div>
+              <div class="comment-body">${c.body}</div>
+              <div class="comment-actions">
+                <button class="comment-action-btn btn-reply-trigger" data-comment-id="${c.id}">
+                  <i class="fas fa-reply"></i> Reply
+                </button>
+                ${adminActions}
+              </div>
+              <div class="reply-form-wrapper" id="reply-form-${c.id}">
+                <textarea class="form-control" style="min-height:70px;margin-bottom:8px;resize:vertical;" placeholder="Reply anonymously..."></textarea>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn btn-primary btn-sm btn-submit-reply" data-comment-id="${c.id}">Submit</button>
+                  <button class="btn btn-ghost btn-sm btn-cancel-reply" data-comment-id="${c.id}">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          ${childrenHTML}
+        </li>
+      `;
+    }
+
+    async function handleCommentSubmit(e) {
+      e.preventDefault();
+      if (!currentUser) {
+        showToast('Sign in to comment', 'error');
+        setTimeout(() => { window.location.href = 'login.html'; }, 900);
+        return;
+      }
+      const textarea = document.getElementById('comment-body-input');
+      const body = textarea.value.trim();
+      if (!body) return;
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
+
+      const { data, error } = await createComment(postId, null, body);
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Comment Anonymously';
+
+      if (!error && data) {
+        textarea.value = '';
+        await loadComments();
+        await loadPostDetails();
+      }
+    }
+
+    function setupCommentsHandlers() {
+      const treeRoot = document.getElementById('comments-tree-root');
+
+      treeRoot.addEventListener('click', async (e) => {
+        // Reply toggle
+        const replyTrigger = e.target.closest('.btn-reply-trigger');
+        if (replyTrigger) {
+          if (!currentUser) { showToast('Sign in to reply','error'); return; }
+          const id = replyTrigger.dataset.commentId;
+          const wrapper = document.getElementById(`reply-form-${id}`);
+          if (wrapper) {
+            const visible = wrapper.style.display === 'block';
+            wrapper.style.display = visible ? 'none' : 'block';
+            if (!visible) wrapper.querySelector('textarea')?.focus();
+          }
+          return;
+        }
+
+        // Submit reply
+        const submitReply = e.target.closest('.btn-submit-reply');
+        if (submitReply) {
+          const id = submitReply.dataset.commentId;
+          const wrapper = document.getElementById(`reply-form-${id}`);
+          const ta = wrapper.querySelector('textarea');
+          const body = ta.value.trim();
+          if (!body) return;
+
+          submitReply.disabled = true;
+          submitReply.textContent = 'Posting...';
+
+          const { data, error } = await createComment(postId, id, body);
+          if (!error && data) {
+            ta.value = '';
+            wrapper.style.display = 'none';
+            await loadComments();
+            await loadPostDetails();
+          } else {
+            submitReply.disabled = false;
+            submitReply.textContent = 'Submit';
+          }
+          return;
+        }
+
+        // Cancel reply
+        const cancelReply = e.target.closest('.btn-cancel-reply');
+        if (cancelReply) {
+          const id = cancelReply.dataset.commentId;
+          const wrapper = document.getElementById(`reply-form-${id}`);
+          if (wrapper) { wrapper.style.display = 'none'; wrapper.querySelector('textarea').value = ''; }
+          return;
+        }
+
+        // Admin delete comment
+        const adminDelComment = e.target.closest('.btn-admin-del-comment');
+        if (adminDelComment && isAdmin) {
+          const id = adminDelComment.dataset.commentId;
+          if (!confirm('Delete this comment?')) return;
+          const { error } = await supabase.from('comments').delete().eq('id', id);
+          if (!error) {
+            showToast('Comment deleted', 'success');
+            await loadComments();
+          } else {
+            showToast('Error deleting comment', 'error');
+          }
+          return;
+        }
+
+        // Vote on comment
+        const voteBtn = e.target.closest('.vote-btn');
+        if (voteBtn && voteBtn.dataset.commentId) {
+          const id = voteBtn.dataset.commentId;
+          const value = voteBtn.classList.contains('up') ? 1 : -1;
+          voteBtn.style.pointerEvents = 'none'; voteBtn.style.opacity = '0.5';
+
+          const { success, newValue, delta } = await voteOnComment(id, value);
+          voteBtn.style.pointerEvents = ''; voteBtn.style.opacity = '';
+
+          if (success) {
+            const node = document.getElementById(`comment-${id}`);
+            if (node) {
+              const up   = node.querySelector('.comment-vote-panel .vote-btn.up');
+              const down = node.querySelector('.comment-vote-panel .vote-btn.down');
+              const score = node.querySelector(`#cscore-${id}`);
+              if (score) {
+                score.textContent = (parseInt(score.textContent) || 0) + delta;
+                score.classList.remove('up-active','down-active');
+                if (newValue === 1) score.classList.add('up-active');
+                if (newValue === -1) score.classList.add('down-active');
+              }
+              if (up && down) {
+                up.classList.remove('active'); down.classList.remove('active');
+                if (newValue === 1) up.classList.add('active');
+                if (newValue === -1) down.classList.add('active');
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

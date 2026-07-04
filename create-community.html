@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Community | SUP</title>
+  <meta name="description" content="Create a new anonymous community on SUP">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <div id="navbar-placeholder"></div>
+
+  <div style="position:relative;z-index:1;max-width:720px;margin:0 auto;padding:28px 20px;">
+
+    <!-- Page Header -->
+    <div style="margin-bottom:24px;" class="animate-up">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+        <a href="index.html" style="width:36px;height:36px;border-radius:50%;background:var(--bg-float);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;text-decoration:none;transition:var(--transition-fast);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text-bright);">Create a Community</h1>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-left:48px;">Build an anonymous space for discussion around any topic.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:20px;" class="animate-up-delay-1">
+
+      <!-- Form Card -->
+      <div class="form-card" style="max-width:100%;padding:32px;">
+        <form id="create-community-form">
+
+          <!-- Name -->
+          <div class="form-group">
+            <label class="form-label" for="comm-name">
+              <i class="fas fa-tag" style="margin-right:6px;color:var(--sakura-mid);"></i>Community Name
+            </label>
+            <input type="text" id="comm-name" class="form-control" required
+              placeholder="e.g. Web Development" maxlength="50">
+          </div>
+
+          <!-- Slug -->
+          <div class="form-group">
+            <label class="form-label" for="comm-slug">
+              <i class="fas fa-link" style="margin-right:6px;color:var(--sakura-mid);"></i>URL Slug
+            </label>
+            <div style="position:relative;display:flex;align-items:center;">
+              <span style="position:absolute;left:14px;color:var(--sakura-mid);font-weight:700;font-size:14px;pointer-events:none;z-index:1;">s/</span>
+              <input type="text" id="comm-slug" class="form-control" required
+                placeholder="webdev" style="padding-left:34px;"
+                pattern="^[a-z0-9-]+$"
+                title="Lowercase letters, numbers, and hyphens only.">
+            </div>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+              Lowercase letters, numbers and hyphens only. Cannot be changed later.
+            </p>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label" for="comm-desc">
+              <i class="fas fa-align-left" style="margin-right:6px;color:var(--sakura-mid);"></i>Description
+            </label>
+            <textarea id="comm-desc" class="form-control" style="min-height:100px;"
+              placeholder="What can people discuss here?" maxlength="300"></textarea>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="desc-chars">0 / 300 characters</p>
+          </div>
+
+          <!-- Optional: Icon & Banner URLs -->
+          <div style="padding:16px;background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:var(--radius-md);margin-bottom:20px;">
+            <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:12px;">Optional Branding</p>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label" for="comm-icon" style="font-size:12px;">Icon URL</label>
+              <input type="url" id="comm-icon" class="form-control" placeholder="https://example.com/icon.png">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="comm-banner" style="font-size:12px;">Banner URL</label>
+              <input type="url" id="comm-banner" class="form-control" placeholder="https://example.com/banner.png">
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div style="display:flex;gap:12px;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--border-subtle);">
+            <a href="index.html" class="btn btn-ghost"><i class="fas fa-times"></i> Cancel</a>
+            <button type="submit" id="comm-submit-btn" class="btn btn-primary">
+              <i class="fas fa-plus"></i> Create Community
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tips Sidebar -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="sidebar-card" style="background:linear-gradient(145deg,rgba(232,96,138,0.06),rgba(22,17,31,0.99));border-color:rgba(232,96,138,0.12);">
+          <p class="sidebar-heading" style="color:var(--sakura-deep);">Community Tips</p>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:10px;">
+            ${[
+              ['fas fa-users','Choose a broad enough topic to attract members'],
+              ['fas fa-pen','Write a clear description so people know what to post'],
+              ['fas fa-hashtag','Pick a short, memorable slug — it\'s permanent'],
+              ['fas fa-image','Add an icon for instant visual recognition'],
+            ].map(([icon, tip]) => `
+              <li style="display:flex;gap:10px;align-items:flex-start;">
+                <span style="width:26px;height:26px;border-radius:var(--radius-sm);background:rgba(232,96,138,0.08);display:flex;align-items:center;justify-content:center;color:var(--sakura-rose);font-size:11px;flex-shrink:0;">
+                  <i class="${icon}"></i>
+                </span>
+                <span style="font-size:12px;color:var(--text-secondary);line-height:1.5;">${tip}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+
+        <div class="sidebar-card">
+          <p class="sidebar-heading">Anonymity Reminder</p>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+            Communities are visible to everyone but <strong style="color:var(--text-primary);">only you</strong> know you created it. All public interactions remain anonymous.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { initLayout, requireAuth } from './js/auth.js';
+    import { createCommunity } from './js/communities.js';
+    import { showToast } from './js/utils.js';
+
+    let currentUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      currentUser = await requireAuth();
+      if (currentUser) await initLayout();
+    });
+
+    // Char counter
+    const descEl = document.getElementById('comm-desc');
+    const descChars = document.getElementById('desc-chars');
+    descEl.addEventListener('input', () => {
+      descChars.textContent = `${descEl.value.length} / 300 characters`;
+    });
+
+    // Auto-generate slug from name
+    const nameInput = document.getElementById('comm-name');
+    const slugInput = document.getElementById('comm-slug');
+    nameInput.addEventListener('input', () => {
+      if (!slugInput.dataset.edited) {
+        slugInput.value = nameInput.value
+          .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      }
+    });
+    slugInput.addEventListener('input', () => {
+      slugInput.dataset.edited = 'true';
+      slugInput.value = slugInput.value.toLowerCase().replace(/[^a-z0-9-]+/g, '');
+    });
+
+    // Submit
+    const form = document.getElementById('create-community-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const name   = document.getElementById('comm-name').value.trim();
+      const slug   = document.getElementById('comm-slug').value.trim();
+      const desc   = descEl.value.trim();
+      const icon   = document.getElementById('comm-icon').value.trim() || null;
+      const banner = document.getElementById('comm-banner').value.trim() || null;
+
+      const btn = document.getElementById('comm-submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+      const { data, error } = await createCommunity(name, desc, slug, icon, banner);
+
+      if (!error && data) {
+        showToast('Community created!', 'success');
+        setTimeout(() => { window.location.href = `community.html?slug=${data.slug}`; }, 1000);
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus"></i> Create Community';
+      }
+    });
+  </script>
+</body>
+</html>

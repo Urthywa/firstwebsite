@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUP | Speak Freely, Remain Anonymous</title>
+  <meta name="description" content="SUP is a fully anonymous community platform. Share, vote, and discuss without revealing your identity.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Background orbs -->
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+
+  <!-- Navbar -->
+  <div id="navbar-placeholder"></div>
+
+  <!-- Main Grid -->
+  <div class="container">
+    <div id="sidebar-left-placeholder"></div>
+
+    <!-- Feed -->
+    <main class="page-main" id="feed-main">
+
+      <!-- Hero Banner (shown on default feed view) -->
+      <div class="home-hero animate-up" id="home-hero">
+        <h1 class="home-hero-title glow-text">Welcome to SUP</h1>
+        <p class="home-hero-subtitle">The anonymous community platform. Speak freely — your identity stays hidden behind <strong style="color:var(--sakura-mid);">"Anonymous"</strong>.</p>
+      </div>
+
+      <!-- Feed Header -->
+      <div class="feed-header animate-up-delay-1">
+        <h2 id="feed-title" style="font-size:20px;">Global Feed</h2>
+        <div class="sort-pills" id="sorting-tabs">
+          <button class="sort-pill active" data-sort="new"><i class="fas fa-clock"></i> New</button>
+          <button class="sort-pill" data-sort="hot"><i class="fas fa-fire"></i> Hot</button>
+          <button class="sort-pill" data-sort="top"><i class="fas fa-chart-line"></i> Top</button>
+        </div>
+      </div>
+
+      <!-- Post Feed -->
+      <div id="feed-posts" class="animate-up-delay-2">
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+      </div>
+    </main>
+
+    <div id="sidebar-right-placeholder"></div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { initLayout } from './js/auth.js';
+    import { fetchPosts, renderPostCardHTML } from './js/posts.js';
+    import { initVotingListeners } from './js/votes.js';
+    import { getQueryParams } from './js/utils.js';
+
+    let currentSort = 'new';
+    let currentSearch = '';
+    let viewMode = 'feed';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initLayout();
+
+      const params = getQueryParams();
+      if (params.view === 'communities') {
+        viewMode = 'communities';
+        document.getElementById('menu-comm')?.classList.add('active');
+        document.getElementById('home-hero')?.remove();
+        loadCommunitiesPage();
+      } else {
+        if (params.search) {
+          currentSearch = decodeURIComponent(params.search);
+          document.getElementById('feed-title').textContent = `Results: "${currentSearch}"`;
+          const navSearch = document.getElementById('global-search');
+          if (navSearch) navSearch.value = currentSearch;
+        }
+        loadFeed();
+        setupSortListeners();
+        const feedContainer = document.getElementById('feed-posts');
+        initVotingListeners(feedContainer);
+      }
+    });
+
+    async function loadFeed() {
+      const feedPosts = document.getElementById('feed-posts');
+      feedPosts.innerHTML = `
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+        <div class="skeleton-card"><div class="skeleton-item skeleton-title"></div><div class="skeleton-item skeleton-text"></div><div class="skeleton-item skeleton-meta"></div></div>
+      `;
+
+      const { data: posts, error } = await fetchPosts({ sortBy: currentSort, searchQuery: currentSearch });
+
+      if (error) {
+        feedPosts.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon">⚠️</span>
+            <h3 class="empty-title">Something went wrong</h3>
+            <p class="empty-text">Failed to load posts. Please reload the page.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (!posts || posts.length === 0) {
+        feedPosts.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon">🌸</span>
+            <h3 class="empty-title">Nothing here yet</h3>
+            <p class="empty-text">${currentSearch ? 'No posts matched your search.' : 'Be the first to share something in a community!'}</p>
+            ${currentSearch ? `<a href="index.html" class="btn btn-ghost" style="margin-top:16px;">Clear Search</a>` : ''}
+          </div>
+        `;
+        return;
+      }
+
+      feedPosts.innerHTML = posts.map(post => renderPostCardHTML(post)).join('');
+    }
+
+    function setupSortListeners() {
+      const tabs = document.querySelectorAll('.sort-pill');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          if (tab.classList.contains('active')) return;
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentSort = tab.dataset.sort;
+          loadFeed();
+        });
+      });
+    }
+
+    async function loadCommunitiesPage() {
+      const mainContent = document.getElementById('feed-main');
+      mainContent.innerHTML = `
+        <div class="feed-header animate-up">
+          <h2 style="font-size:20px;">Explore Communities</h2>
+          <div class="search-bar" style="display:block;flex:0 1 280px;margin:0;">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="comm-list-search" placeholder="Find a community...">
+          </div>
+        </div>
+        <div class="community-grid animate-up-delay-1" id="communities-grid">
+          <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted);">
+            <i class="fas fa-circle-notch fa-spin" style="font-size:28px;margin-bottom:14px;display:block;"></i>
+            <p>Loading communities...</p>
+          </div>
+        </div>
+      `;
+
+      const searchInput = document.getElementById('comm-list-search');
+      await fetchAndRenderCommunities();
+
+      let searchTimeout;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => fetchAndRenderCommunities(searchInput.value.trim()), 300);
+      });
+    }
+
+    async function fetchAndRenderCommunities(search = '') {
+      const grid = document.getElementById('communities-grid');
+      const { fetchCommunities, getMemberCount } = await import('./js/communities.js');
+      const { data: list, error } = await fetchCommunities(search);
+
+      if (error || !list) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f87171;padding:40px;">Failed to load communities.</div>`;
+        return;
+      }
+
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;">
+            <span class="empty-icon">🔍</span>
+            <h3 class="empty-title">No communities found</h3>
+            <p class="empty-text">No results for your search. Try creating your own!</p>
+          </div>
+        `;
+        return;
+      }
+
+      const memberCounts = await Promise.all(list.map(c => getMemberCount(c.id)));
+
+      grid.innerHTML = list.map((c, idx) => {
+        const icon = c.name.charAt(0).toUpperCase();
+        return `
+          <div class="community-card">
+            <div class="community-card-header">
+              ${c.icon_url
+                ? `<img src="${c.icon_url}" class="community-card-icon" style="object-fit:cover;" alt="Icon">`
+                : `<div class="community-card-icon">${icon}</div>`}
+              <div>
+                <div class="community-card-title">s/${c.slug}</div>
+                <div class="community-card-meta"><i class="fas fa-users" style="font-size:10px;"></i> ${memberCounts[idx]} members</div>
+              </div>
+            </div>
+            <p class="community-card-desc">${c.description || 'No description provided.'}</p>
+            <a href="community.html?slug=${c.slug}" class="btn btn-glass btn-sm" style="justify-content:center;margin-top:auto;">
+              Visit <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

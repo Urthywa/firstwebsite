@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create a Post | SUP</title>
+  <meta name="description" content="Share a post anonymously on SUP">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <div id="navbar-placeholder"></div>
+
+  <div style="position:relative;z-index:1;max-width:780px;margin:0 auto;padding:28px 20px;">
+
+    <!-- Page Header -->
+    <div style="margin-bottom:24px;" class="animate-up">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <a href="index.html" style="width:36px;height:36px;border-radius:50%;background:var(--bg-float);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;text-decoration:none;transition:var(--transition-fast);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text-bright);">Create a Post</h1>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-left:48px;">
+        <i class="fas fa-user-secret" style="margin-right:6px;color:var(--sakura-mid);"></i>
+        Your post will appear publicly as <strong style="color:var(--text-primary);">"Anonymous"</strong>
+      </p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card animate-up-delay-1" style="max-width:100%;padding:36px;">
+
+      <form id="create-post-form">
+
+        <!-- Community Selector -->
+        <div class="form-group">
+          <label class="form-label" for="post-community">
+            <i class="fas fa-compass" style="margin-right:6px;color:var(--sakura-mid);"></i>Choose a Community
+          </label>
+          <select id="post-community" class="form-control" required>
+            <option value="" disabled selected>Select a community...</option>
+          </select>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <label class="form-label" for="post-title">
+            <i class="fas fa-heading" style="margin-right:6px;color:var(--sakura-mid);"></i>Post Title
+          </label>
+          <input type="text" id="post-title" class="form-control" required
+            placeholder="Write a compelling, descriptive title..." maxlength="150">
+          <p style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="title-chars">0 / 150 characters</p>
+        </div>
+
+        <!-- Post Type Tabs -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-layer-group" style="margin-right:6px;color:var(--sakura-mid);"></i>Content Type
+          </label>
+          <div class="post-type-tabs">
+            <button type="button" class="post-type-tab active" data-type="text">
+              <i class="fas fa-align-left"></i> Text
+            </button>
+            <button type="button" class="post-type-tab" data-type="link">
+              <i class="fas fa-link"></i> Link
+            </button>
+            <button type="button" class="post-type-tab" data-type="image">
+              <i class="fas fa-image"></i> Image
+            </button>
+          </div>
+        </div>
+
+        <input type="hidden" id="post-type" value="text">
+
+        <!-- Text Content -->
+        <div id="content-text" class="type-content active">
+          <div class="form-group">
+            <label class="form-label" for="post-body">Body Text <span style="color:var(--text-ghost);">(optional)</span></label>
+            <textarea id="post-body" class="form-control" style="min-height:140px;"
+              placeholder="Share your thoughts, story, or anything you'd like to say..."></textarea>
+          </div>
+        </div>
+
+        <!-- Link Content -->
+        <div id="content-link" class="type-content">
+          <div class="form-group">
+            <label class="form-label" for="post-link">URL</label>
+            <div class="input-group" style="position:relative;">
+              <i class="fas fa-globe" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;pointer-events:none;z-index:1;"></i>
+              <input type="url" id="post-link" class="form-control" style="padding-left:44px;"
+                placeholder="https://example.com">
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Content -->
+        <div id="content-image" class="type-content">
+          <div class="form-group">
+            <label class="form-label">Upload Image</label>
+            <div class="file-upload-wrapper" id="dropzone">
+              <div class="file-upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+              <p style="font-size:14px;color:var(--text-secondary);margin-bottom:4px;">Drag & drop or click to upload</p>
+              <p style="font-size:12px;color:var(--text-muted);">PNG, JPG, GIF — max 10MB</p>
+              <input type="file" id="post-image-file" accept="image/*">
+            </div>
+            <div class="image-preview" id="image-preview-container" style="margin-top:12px;">
+              <img id="image-preview-img" src="" alt="Preview" style="border-radius:var(--radius-md);max-height:260px;object-fit:contain;width:100%;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:28px;padding-top:20px;border-top:1px solid var(--border-subtle);">
+          <a href="index.html" class="btn btn-ghost"><i class="fas fa-times"></i> Cancel</a>
+          <button type="submit" id="post-submit-btn" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Post Anonymously
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { initLayout, requireAuth } from './js/auth.js';
+    import { fetchCommunities } from './js/communities.js';
+    import { createPost } from './js/posts.js';
+    import { showToast, getQueryParams } from './js/utils.js';
+
+    let currentUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      currentUser = await requireAuth();
+      if (currentUser) {
+        await initLayout();
+        await loadCommunitiesDropdown();
+      }
+    });
+
+    async function loadCommunitiesDropdown() {
+      const { data: communities } = await fetchCommunities();
+      const select = document.getElementById('post-community');
+      if (communities && select) {
+        communities.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `s/${c.slug} — ${c.name}`;
+          select.appendChild(opt);
+        });
+        const params = getQueryParams();
+        if (params.commId) select.value = params.commId;
+      }
+    }
+
+    // Title char counter
+    const titleInput = document.getElementById('post-title');
+    const titleChars = document.getElementById('title-chars');
+    titleInput.addEventListener('input', () => {
+      titleChars.textContent = `${titleInput.value.length} / 150 characters`;
+    });
+
+    // Post type tabs
+    const tabs = document.querySelectorAll('.post-type-tab');
+    const typeInput = document.getElementById('post-type');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const type = tab.dataset.type;
+        typeInput.value = type;
+        document.querySelectorAll('.type-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(`content-${type}`).classList.add('active');
+
+        const linkInput = document.getElementById('post-link');
+        const fileInput = document.getElementById('post-image-file');
+        if (type === 'link') { linkInput.required = true; fileInput.required = false; }
+        else if (type === 'image') { linkInput.required = false; fileInput.required = true; }
+        else { linkInput.required = false; fileInput.required = false; }
+      });
+    });
+
+    // Image preview
+    const fileInput = document.getElementById('post-image-file');
+    const previewContainer = document.getElementById('image-preview-container');
+    const previewImg = document.getElementById('image-preview-img');
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          previewImg.src = e.target.result;
+          previewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previewContainer.style.display = 'none';
+        previewImg.src = '';
+      }
+    });
+
+    // Submit
+    const form = document.getElementById('create-post-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const commId = document.getElementById('post-community').value;
+      if (!commId) { showToast('Please select a community', 'error'); return; }
+
+      const title = titleInput.value.trim();
+      const type = typeInput.value;
+      const body = document.getElementById('post-body').value.trim();
+      const link = document.getElementById('post-link').value.trim();
+      const file = fileInput.files[0];
+
+      const btn = document.getElementById('post-submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
+
+      const { data, error } = await createPost(commId, title, type, body, link, file);
+
+      if (!error && data) {
+        showToast('Post created!', 'success');
+        setTimeout(() => { window.location.href = `post.html?id=${data.id}`; }, 1000);
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Post Anonymously';
+      }
+    });
+  </script>
+</body>
+</html>
